@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"nvol/flow"
+	"github.com/nvol/flow"
 	"sync"
 	"testing"
 	"time"
