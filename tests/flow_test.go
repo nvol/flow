@@ -63,7 +63,7 @@ func TestOneRelaunchAndOneBreak(t *testing.T) {
 		}()
 
 		// do something...
-		time.Sleep(time.Second)
+		time.Sleep(time.Second) // haven't this sleep in the example
 
 		// first time - relaunch, second time - break totally
 		if launchCount == 1 {
