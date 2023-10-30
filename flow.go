@@ -28,17 +28,17 @@ func Run(
 		logger = new(defaultLogger)
 	}
 
-	logger.Info("let's begin!")
-	defer logger.Info("goodbye!")
+	logger.Info("Let's begin!")
+	defer logger.Info("Goodbye!")
 
 	GlobalBreakCtx, GlobalBreakFunc = signal.NotifyContext(context.Background(), syscall.SIGINT)
 	defer GlobalBreakFunc()
 
 flowLoop:
 	for {
-		moduleWg := new(sync.WaitGroup)
+		moduleWg := &sync.WaitGroup{}
 
-		logger.Info("starting a work")
+		logger.Info("Starting a work...")
 
 		restartCtx, restartFunc := context.WithCancel(GlobalBreakCtx)
 		breakCtx, breakFunc := context.WithCancel(GlobalBreakCtx)
@@ -47,14 +47,17 @@ flowLoop:
 		needRestart := false
 		select {
 		case <-restartCtx.Done():
+			logger.Info("Got a signal to restart the work")
 			needRestart = true // don't forget to restart the work
 		case <-GlobalBreakCtx.Done():
+			logger.Info("Got a signal to finish the work")
 		}
 
 		breakFunc() // send break signal to the worker anyway (break or restart)
 
 		workDone := make(chan struct{})
 		go func() {
+			logger.Info("Waiting for the module wait-group to get unlocked...")
 			moduleWg.Wait()
 			close(workDone)
 		}()
@@ -63,7 +66,7 @@ flowLoop:
 		for {
 			select {
 			case <-workDone:
-				logger.Info("the work is done")
+				logger.Info("The work is done (module wait-group unlocked)")
 				if needRestart {
 					// just restart the work
 					break wgDrainerLoop
@@ -71,23 +74,24 @@ flowLoop:
 				// break totally
 				break flowLoop
 			case <-time.After(maxDurToBreak):
-				logger.Info("ATTENTION: module wait-group was not unlocked during " + maxDurToBreak.String())
+				logger.Info("ATTENTION: Module wait-group was not unlocked during " + maxDurToBreak.String())
 				panic(errors.New("some work still in progress, cannot shutdown gracefully"))
 			}
 		}
 		// ---
-		logger.Info("will restart the work in 1s")
+		if GlobalBreakCtx.Err() == nil {
+			logger.Info("Will restart the work in 1s")
+		}
 
-		// breakable delay between restarts
+		// breakable delay before restart
 		select {
 		case <-time.After(time.Second):
 		case <-GlobalBreakCtx.Done():
 			// break totally
+			logger.Info("Got a break signal during the delay before the work restart")
 			break flowLoop
 		}
 	}
-	// ---
-	logger.Info("shutting down gracefully")
 }
 
 func BreakForcibly() {
