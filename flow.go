@@ -74,7 +74,7 @@ flowLoop:
 				// break totally
 				break flowLoop
 			case <-time.After(maxDurToBreak):
-				logger.Info("ATTENTION: Module wait-group was not unlocked during " + maxDurToBreak.String())
+				logger.Warn("ATTENTION: Module wait-group was not unlocked during " + maxDurToBreak.String())
 				panic(errors.New("some work still in progress, cannot shutdown gracefully"))
 			}
 		}
