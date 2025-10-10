@@ -31,7 +31,7 @@ func Run(
 	logger.Info("Let's begin!")
 	defer logger.Info("Goodbye!")
 
-	GlobalBreakCtx, GlobalBreakFunc = signal.NotifyContext(context.Background(), syscall.SIGINT)
+	GlobalBreakCtx, GlobalBreakFunc = signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer GlobalBreakFunc()
 
 flowLoop:
